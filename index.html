@@ -16,10 +16,11 @@
   }
   *{box-sizing:border-box;}
   body{margin:0;font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
-  #app{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+  #app{max-width:720px;width:100%;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+  @media (min-width:760px){ body{display:flex;justify-content:center;} #app{box-shadow:0 0 0 1px var(--border);} main{padding:24px 32px;} }
 
   /* ---- header ---- */
-  header{background:var(--teal);color:#fff;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;}
+  header{background:var(--teal);color:#fff;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:30;}
   header .title{font-size:16px;font-weight:600;}
   header .who{font-size:12px;opacity:.85;}
   header button{background:rgba(255,255,255,.15);color:#fff;border:none;padding:6px 10px;border-radius:8px;font-size:12px;}
@@ -44,9 +45,13 @@
   .ok{color:var(--teal-dark);font-size:13px;margin-top:10px;}
 
   /* ---- tabs / nav ---- */
-  nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:flex;max-width:520px;margin:0 auto;}
-  nav button{flex:1;background:none;border:none;padding:10px 4px 12px;font-size:11px;color:var(--text-muted);font-weight:600;}
+  nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:flex;max-width:720px;margin:0 auto;}
+  nav button{flex:1;background:none;border:none;padding:8px 4px 10px;font-size:11px;color:var(--text-muted);font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;}
+  nav button svg{width:22px;height:22px;stroke:var(--text-muted);fill:none;stroke-width:1.8;}
   nav button.active{color:var(--teal);}
+  nav button.active svg{stroke:var(--teal);}
+  .admin-filter-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;}
+  @media (max-width:480px){ .admin-filter-row{grid-template-columns:1fr 1fr;} .admin-filter-row select:first-child{grid-column:1 / -1;} }
 
   .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;}
   .card h2{font-size:15px;margin:0 0 12px;color:var(--text);}
@@ -184,6 +189,17 @@
       <section id="tab-dashboard" style="display:none">
         <div class="card">
           <h2 id="dashTitle">Rekap kegiatan</h2>
+
+          <div id="adminFilters" style="display:none">
+            <label>Filter cepat (admin)</label>
+            <div class="admin-filter-row">
+              <select id="d-filter-apoteker"><option value="">Semua apoteker</option></select>
+              <select id="d-filter-bulan"></select>
+              <select id="d-filter-tahun"></select>
+            </div>
+            <div class="hint">Pilih bulan &amp; tahun untuk otomatis mengisi rentang tanggal di bawah.</div>
+          </div>
+
           <div class="row2">
             <div><label>Dari tanggal</label><input type="date" id="d-mulai"></div>
             <div><label>Sampai tanggal</label><input type="date" id="d-selesai"></div>
@@ -195,9 +211,18 @@
     </main>
 
     <nav>
-      <button id="nav-input" class="active" onclick="switchTab('input')">Input harian</button>
-      <button id="nav-riwayat" onclick="switchTab('riwayat')">Riwayat saya</button>
-      <button id="nav-dashboard" onclick="switchTab('dashboard')">Dashboard</button>
+      <button id="nav-input" class="active" onclick="switchTab('input')">
+        <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        Input harian
+      </button>
+      <button id="nav-riwayat" onclick="switchTab('riwayat')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        Riwayat saya
+      </button>
+      <button id="nav-dashboard" onclick="switchTab('dashboard')">
+        <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>
+        Dashboard
+      </button>
     </nav>
   </div>
 
@@ -236,6 +261,7 @@ window.onload = function(){
 };
 
 function populateApotekerLogin(list){
+  APOTEKER_LIST = list;
   const sel = document.getElementById('loginNama');
   sel.innerHTML = '<option value="">Pilih nama...</option>' + list.map(n=>`<option>${n}</option>`).join('');
 }
@@ -260,6 +286,7 @@ function doLogin(){
       document.getElementById('dashTitle').textContent = 'Rekap kegiatan saya';
     } else {
       document.getElementById('dashTitle').textContent = 'Rekap kegiatan semua apoteker';
+      setupAdminFilters();
     }
   });
 }
@@ -393,11 +420,63 @@ function hapusKunjungan(id){
 }
 
 // ---------- dashboard ----------
+let APOTEKER_LIST = [];
+
+function setupAdminFilters(){
+  document.getElementById('adminFilters').style.display = 'block';
+
+  const selApt = document.getElementById('d-filter-apoteker');
+  if(selApt.options.length <= 1){
+    APOTEKER_LIST.forEach(n=>{
+      const opt = document.createElement('option'); opt.value = n; opt.textContent = n;
+      selApt.appendChild(opt);
+    });
+  }
+
+  const selBulan = document.getElementById('d-filter-bulan');
+  if(selBulan.options.length === 0){
+    const bulanNama = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    selBulan.innerHTML = '<option value="">Pilih bulan...</option>' + bulanNama.map((b,i)=>`<option value="${i+1}">${b}</option>`).join('');
+  }
+
+  const selTahun = document.getElementById('d-filter-tahun');
+  if(selTahun.options.length === 0){
+    const y = new Date().getFullYear();
+    let opts = '<option value="">Tahun...</option>';
+    for(let t=y-1; t<=y+1; t++) opts += `<option value="${t}"${t===y?' selected':''}>${t}</option>`;
+    selTahun.innerHTML = opts;
+  }
+
+  selBulan.onchange = applyBulanTahun;
+  selTahun.onchange = applyBulanTahun;
+  selApt.onchange = loadDashboard;
+}
+
+function applyBulanTahun(){
+  const bulan = parseInt(document.getElementById('d-filter-bulan').value);
+  const tahun = parseInt(document.getElementById('d-filter-tahun').value);
+  if(!bulan || !tahun) return;
+  const awal = new Date(tahun, bulan-1, 1);
+  const akhir = new Date(tahun, bulan, 0);
+  document.getElementById('d-mulai').value = awal.toISOString().slice(0,10);
+  document.getElementById('d-selesai').value = akhir.toISOString().slice(0,10);
+  loadDashboard();
+}
+
 function loadDashboard(){
   const mulai = document.getElementById('d-mulai').value;
   const selesai = document.getElementById('d-selesai').value;
   document.getElementById('dashboardResult').innerHTML = '<div class="empty">Memuat...</div>';
-  callApi('getDashboard', { requesterNama: CURRENT.nama, requesterRole: CURRENT.role, tanggalMulai: mulai, tanggalSelesai: selesai }).then(renderDashboard);
+  callApi('getDashboard', { requesterNama: CURRENT.nama, requesterRole: CURRENT.role, tanggalMulai: mulai, tanggalSelesai: selesai }).then(function(res){
+    if(CURRENT.role === 'admin'){
+      const filterApt = document.getElementById('d-filter-apoteker').value;
+      if(filterApt){
+        const only = {}; if(res.rekap[filterApt]) only[filterApt] = res.rekap[filterApt];
+        res = Object.assign({}, res, { rekap: only });
+      }
+    }
+    renderDashboard(res);
+  });
 }
 
 function renderDashboard(res){
