@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Logbook Apoteker</title>
+<style>
+  :root{
+    --bg:#F5F8F7; --card:#FFFFFF; --border:#DFE5E2; --border-strong:#BFC9C4;
+    --teal:#0F6E56; --teal-light:#E1F5EE; --teal-dark:#085041;
+    --blue:#185FA5; --blue-light:#E6F1FB;
+    --text:#1E2724; --text-secondary:#5B655F; --text-muted:#8A938D;
+    --danger:#A32D2D; --danger-light:#FCEBEB;
+    --amber:#854F0B; --amber-light:#FAEEDA;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
+  #app{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+
+  /* ---- header ---- */
+  header{background:var(--teal);color:#fff;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;}
+  header .title{font-size:16px;font-weight:600;}
+  header .who{font-size:12px;opacity:.85;}
+  header button{background:rgba(255,255,255,.15);color:#fff;border:none;padding:6px 10px;border-radius:8px;font-size:12px;}
+
+  main{flex:1;padding:16px;padding-bottom:80px;}
+
+  /* ---- login ---- */
+  .login-wrap{display:flex;flex-direction:column;justify-content:center;min-height:100vh;padding:24px;}
+  .login-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px 22px;}
+  .login-card h1{font-size:19px;margin:0 0 4px;color:var(--teal-dark);}
+  .login-card p{font-size:13px;color:var(--text-secondary);margin:0 0 20px;}
+
+  label{display:block;font-size:12px;color:var(--text-secondary);margin:14px 0 6px;font-weight:600;}
+  input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--border-strong);border-radius:8px;font-size:15px;background:#fff;color:var(--text);}
+  textarea{resize:vertical;min-height:60px;}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--teal);outline-offset:1px;border-color:var(--teal);}
+
+  button.primary{width:100%;background:var(--teal);color:#fff;border:none;padding:13px;border-radius:8px;font-size:15px;font-weight:600;margin-top:18px;cursor:pointer;}
+  button.primary:active{background:var(--teal-dark);}
+  button.secondary{width:100%;background:#fff;color:var(--teal);border:1px solid var(--teal);padding:11px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;}
+  .err{color:var(--danger);font-size:13px;margin-top:10px;}
+  .ok{color:var(--teal-dark);font-size:13px;margin-top:10px;}
+
+  /* ---- tabs / nav ---- */
+  nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:flex;max-width:520px;margin:0 auto;}
+  nav button{flex:1;background:none;border:none;padding:10px 4px 12px;font-size:11px;color:var(--text-muted);font-weight:600;}
+  nav button.active{color:var(--teal);}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;}
+  .card h2{font-size:15px;margin:0 0 12px;color:var(--text);}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+  .chip-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+  .chip{border:1px solid var(--border-strong);border-radius:20px;padding:8px 14px;font-size:13px;cursor:pointer;color:var(--text-secondary);user-select:none;}
+  .chip.on{background:var(--teal-light);border-color:var(--teal);color:var(--teal-dark);font-weight:600;}
+
+  .seg{display:flex;background:var(--bg);border-radius:8px;padding:3px;margin-bottom:14px;}
+  .seg button{flex:1;background:none;border:none;padding:8px;border-radius:6px;font-size:13px;font-weight:600;color:var(--text-secondary);}
+  .seg button.active{background:#fff;color:var(--teal-dark);box-shadow:0 1px 2px rgba(0,0,0,.08);}
+
+  .item{border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;background:#fff;}
+  .item-top{display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-bottom:4px;}
+  .item-name{font-size:14px;font-weight:600;}
+  .item-actions{display:flex;gap:8px;margin-top:8px;}
+  .item-actions button{font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid var(--border-strong);background:#fff;color:var(--text-secondary);}
+  .item-actions button.danger{color:var(--danger);border-color:var(--danger-light);}
+  .locked-tag{font-size:11px;color:var(--text-muted);background:var(--bg);padding:2px 8px;border-radius:10px;}
+
+  .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:var(--teal-light);color:var(--teal-dark);margin:2px 4px 0 0;}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th,td{padding:7px 6px;text-align:left;border-bottom:1px solid var(--border);}
+  th{color:var(--text-secondary);font-weight:600;background:var(--bg);}
+  .totals{background:var(--teal-light);font-weight:700;}
+  .scroll-x{overflow-x:auto;}
+  .empty{text-align:center;color:var(--text-muted);font-size:13px;padding:30px 10px;}
+  .hint{font-size:11.5px;color:var(--text-muted);margin-top:4px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- LOGIN -->
+  <div id="view-login" class="login-wrap">
+    <div class="login-card">
+      <h1>Logbook apoteker</h1>
+      <p>Masuk untuk mencatat kegiatan pelayanan farmasi harian.</p>
+      <label>Nama apoteker</label>
+      <select id="loginNama"><option value="">Memuat...</option></select>
+      <label>PIN</label>
+      <input id="loginPin" type="password" inputmode="numeric" placeholder="4 digit PIN">
+      <button class="primary" onclick="doLogin()">Masuk</button>
+      <div id="loginMsg"></div>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="view-app" style="display:none">
+    <header>
+      <div>
+        <div class="title">Logbook apoteker</div>
+        <div class="who" id="whoami"></div>
+      </div>
+      <button onclick="logout()">Keluar</button>
+    </header>
+
+    <main>
+      <!-- TAB: INPUT -->
+      <section id="tab-input">
+        <div class="seg">
+          <button id="seg-kunjungan" class="active" onclick="switchInputSeg('kunjungan')">Kunjungan pasien</button>
+          <button id="seg-pio" onclick="switchInputSeg('pio')">PIO</button>
+        </div>
+
+        <div id="form-kunjungan" class="card">
+          <h2>Catat kunjungan pasien</h2>
+          <label>Tanggal kegiatan</label>
+          <input type="date" id="k-tgl">
+          <div class="row2">
+            <div><label>Ruangan</label><select id="k-ruangan"></select></div>
+            <div><label>Nama pasien</label><input id="k-pasien" placeholder="Nama pasien"></div>
+          </div>
+          <label>Terapi</label>
+          <textarea id="k-terapi" placeholder="Regimen terapi..."></textarea>
+          <label>Follow up (opsional)</label>
+          <textarea id="k-followup"></textarea>
+          <label>Jenis kegiatan</label>
+          <div class="chip-group" id="k-chips">
+            <div class="chip" data-key="rekonsiliasi">Rekonsiliasi</div>
+            <div class="chip" data-key="pto">PTO</div>
+            <div class="chip" data-key="edukasi">Edukasi</div>
+            <div class="chip" data-key="konseling">Konseling</div>
+            <div class="chip" data-key="meso">MESO</div>
+            <div class="chip" data-key="verifikasiResep">Verifikasi resep</div>
+            <div class="chip" data-key="konfirmasiRajal">Konfirmasi rajal</div>
+            <div class="chip" data-key="obatRajal">Penyerahan obat rajal</div>
+            <div class="chip" data-key="iter">Resep iter</div>
+          </div>
+          <button class="primary" onclick="submitKunjungan()">Simpan kunjungan</button>
+          <div id="kMsg"></div>
+        </div>
+
+        <div id="form-pio" class="card" style="display:none">
+          <h2>Catat PIO (pertanyaan informasi obat)</h2>
+          <label>Tanggal PIO</label>
+          <input type="date" id="p-tgl">
+          <div class="row2">
+            <div><label>Nama penanya</label><input id="p-nama"></div>
+            <div><label>Status penanya</label>
+              <select id="p-status"><option>PERAWAT</option><option>DOKTER</option><option>PASIEN</option><option>KELUARGA PASIEN</option><option>LAIN-LAIN</option></select>
+            </div>
+          </div>
+          <label>Pertanyaan</label>
+          <textarea id="p-pertanyaan"></textarea>
+          <label>Jawaban</label>
+          <textarea id="p-jawaban"></textarea>
+          <div class="row2">
+            <div><label>Pustaka (opsional)</label><input id="p-pustaka"></div>
+            <div><label>Waktu jawab</label>
+              <select id="p-waktu"><option>KURANG DARI 24 JAM</option><option>LEBIH DARI 24 JAM</option></select>
+            </div>
+          </div>
+          <button class="primary" onclick="submitPIO()">Simpan PIO</button>
+          <div id="pMsg"></div>
+        </div>
+      </section>
+
+      <!-- TAB: RIWAYAT -->
+      <section id="tab-riwayat" style="display:none">
+        <div class="card">
+          <h2>Riwayat saya</h2>
+          <div class="row2">
+            <div><label>Dari tanggal</label><input type="date" id="r-mulai"></div>
+            <div><label>Sampai tanggal</label><input type="date" id="r-selesai"></div>
+          </div>
+          <button class="secondary" onclick="loadRiwayat()" style="margin-top:12px">Tampilkan</button>
+        </div>
+        <div id="riwayatList"></div>
+      </section>
+
+      <!-- TAB: DASHBOARD -->
+      <section id="tab-dashboard" style="display:none">
+        <div class="card">
+          <h2 id="dashTitle">Rekap kegiatan</h2>
+          <div class="row2">
+            <div><label>Dari tanggal</label><input type="date" id="d-mulai"></div>
+            <div><label>Sampai tanggal</label><input type="date" id="d-selesai"></div>
+          </div>
+          <button class="secondary" onclick="loadDashboard()" style="margin-top:12px">Tampilkan rekap</button>
+        </div>
+        <div id="dashboardResult"></div>
+      </section>
+    </main>
+
+    <nav>
+      <button id="nav-input" class="active" onclick="switchTab('input')">Input harian</button>
+      <button id="nav-riwayat" onclick="switchTab('riwayat')">Riwayat saya</button>
+      <button id="nav-dashboard" onclick="switchTab('dashboard')">Dashboard</button>
+    </nav>
+  </div>
+
+</div>
+
+<script>
+let CURRENT = { nama: null, role: null };
+let selectedChips = {};
+
+// ---------- init ----------
+window.onload = function(){
+  google.script.run.withSuccessHandler(populateApotekerLogin).getApotekerList();
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('k-tgl').value = today;
+  document.getElementById('p-tgl').value = today;
+  document.getElementById('r-mulai').value = today;
+  document.getElementById('r-selesai').value = today;
+  document.getElementById('d-mulai').value = today;
+  document.getElementById('d-selesai').value = today;
+};
+
+function populateApotekerLogin(list){
+  const sel = document.getElementById('loginNama');
+  sel.innerHTML = '<option value="">Pilih nama...</option>' + list.map(n=>`<option>${n}</option>`).join('');
+}
+
+function doLogin(){
+  const nama = document.getElementById('loginNama').value;
+  const pin = document.getElementById('loginPin').value;
+  const msg = document.getElementById('loginMsg');
+  if(!nama || !pin){ msg.innerHTML = '<div class="err">Pilih nama dan isi PIN.</div>'; return; }
+  msg.innerHTML = '';
+  google.script.run.withSuccessHandler(function(res){
+    if(!res.success){ msg.innerHTML = '<div class="err">'+res.message+'</div>'; return; }
+    CURRENT.nama = res.nama; CURRENT.role = res.role;
+    document.getElementById('view-login').style.display='none';
+    document.getElementById('view-app').style.display='block';
+    document.getElementById('whoami').textContent = res.nama + ' · ' + (res.role==='admin'?'Admin':'Apoteker');
+    google.script.run.withSuccessHandler(function(list){
+      document.getElementById('k-ruangan').innerHTML = list.map(r=>`<option>${r}</option>`).join('');
+    }).getRuanganList();
+    if(res.role !== 'admin'){
+      document.getElementById('dashTitle').textContent = 'Rekap kegiatan saya';
+    } else {
+      document.getElementById('dashTitle').textContent = 'Rekap kegiatan semua apoteker';
+    }
+  }).login(nama, pin);
+}
+
+function logout(){
+  CURRENT = { nama:null, role:null };
+  document.getElementById('view-app').style.display='none';
+  document.getElementById('view-login').style.display='flex';
+  document.getElementById('loginPin').value='';
+}
+
+// ---------- nav ----------
+function switchTab(tab){
+  ['input','riwayat','dashboard'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display = (t===tab)?'block':'none';
+    document.getElementById('nav-'+t).classList.toggle('active', t===tab);
+  });
+}
+function switchInputSeg(seg){
+  document.getElementById('form-kunjungan').style.display = seg==='kunjungan'?'block':'none';
+  document.getElementById('form-pio').style.display = seg==='pio'?'block':'none';
+  document.getElementById('seg-kunjungan').classList.toggle('active', seg==='kunjungan');
+  document.getElementById('seg-pio').classList.toggle('active', seg==='pio');
+}
+
+// ---------- chips ----------
+document.addEventListener('click', function(e){
+  if(e.target.classList.contains('chip')){
+    e.target.classList.toggle('on');
+    selectedChips[e.target.dataset.key] = e.target.classList.contains('on');
+  }
+});
+
+// ---------- submit kunjungan ----------
+function submitKunjungan(){
+  const data = {
+    apoteker: CURRENT.nama,
+    tglKegiatan: document.getElementById('k-tgl').value,
+    ruangan: document.getElementById('k-ruangan').value,
+    namaPasien: document.getElementById('k-pasien').value,
+    terapi: document.getElementById('k-terapi').value,
+    followUp: document.getElementById('k-followup').value,
+    rekonsiliasi: !!selectedChips.rekonsiliasi, pto: !!selectedChips.pto,
+    edukasi: !!selectedChips.edukasi, konseling: !!selectedChips.konseling,
+    meso: !!selectedChips.meso, verifikasiResep: !!selectedChips.verifikasiResep,
+    konfirmasiRajal: !!selectedChips.konfirmasiRajal, obatRajal: !!selectedChips.obatRajal,
+    iter: !!selectedChips.iter
+  };
+  if(!data.namaPasien){ document.getElementById('kMsg').innerHTML='<div class="err">Nama pasien wajib diisi.</div>'; return; }
+  document.getElementById('kMsg').innerHTML = '';
+  google.script.run.withSuccessHandler(function(res){
+    if(res.success){
+      document.getElementById('kMsg').innerHTML = '<div class="ok">Tersimpan.</div>';
+      document.getElementById('k-pasien').value=''; document.getElementById('k-terapi').value='';
+      document.getElementById('k-followup').value='';
+      document.querySelectorAll('#k-chips .chip').forEach(c=>c.classList.remove('on'));
+      selectedChips = {};
+    }
+  }).addKunjungan(data);
+}
+
+// ---------- submit PIO ----------
+function submitPIO(){
+  const data = {
+    apoteker: CURRENT.nama,
+    tglPIO: document.getElementById('p-tgl').value,
+    namaPenanya: document.getElementById('p-nama').value,
+    statusPenanya: document.getElementById('p-status').value,
+    pertanyaan: document.getElementById('p-pertanyaan').value,
+    jawaban: document.getElementById('p-jawaban').value,
+    pustaka: document.getElementById('p-pustaka').value,
+    waktuJawab: document.getElementById('p-waktu').value
+  };
+  if(!data.pertanyaan || !data.jawaban){ document.getElementById('pMsg').innerHTML='<div class="err">Pertanyaan dan jawaban wajib diisi.</div>'; return; }
+  document.getElementById('pMsg').innerHTML = '';
+  google.script.run.withSuccessHandler(function(res){
+    if(res.success){
+      document.getElementById('pMsg').innerHTML = '<div class="ok">Tersimpan.</div>';
+      document.getElementById('p-nama').value=''; document.getElementById('p-pertanyaan').value='';
+      document.getElementById('p-jawaban').value=''; document.getElementById('p-pustaka').value='';
+    }
+  }).addPIO(data);
+}
+
+// ---------- riwayat ----------
+function loadRiwayat(){
+  const mulai = document.getElementById('r-mulai').value;
+  const selesai = document.getElementById('r-selesai').value;
+  document.getElementById('riwayatList').innerHTML = '<div class="empty">Memuat...</div>';
+  google.script.run.withSuccessHandler(renderRiwayat).getRiwayatSaya(CURRENT.nama, mulai, selesai);
+}
+
+function renderRiwayat(data){
+  const el = document.getElementById('riwayatList');
+  if(data.kunjungan.length===0 && data.pio.length===0){
+    el.innerHTML = '<div class="empty">Belum ada data pada rentang tanggal ini.</div>'; return;
+  }
+  const today = new Date().toISOString().slice(0,10);
+  let html = '';
+  data.kunjungan.forEach(k=>{
+    const tglInput = new Date(k.Timestamp).toISOString().slice(0,10);
+    const editable = tglInput === today;
+    const cats = ['Rekonsiliasi','PTO','Edukasi','Konseling','MESO','VerifikasiResep','KonfirmasiRajal','ObatRajal','Iter']
+      .filter(c=>k[c]===true);
+    html += `<div class="item">
+      <div class="item-top"><span>${fmtDate(k.TglKegiatan)} · ${k.Ruangan}</span>${editable?'':'<span class="locked-tag">terkunci</span>'}</div>
+      <div class="item-name">${escapeHtml(k.NamaPasien)}</div>
+      <div>${cats.map(c=>'<span class="badge">'+c+'</span>').join('')}</div>
+      ${editable? `<div class="item-actions"><button class="danger" onclick="hapusKunjungan('${k.ID}')">Hapus</button></div>`:''}
+    </div>`;
+  });
+  data.pio.forEach(p=>{
+    html += `<div class="item">
+      <div class="item-top"><span>${fmtDate(p.TglPIO)} · PIO</span></div>
+      <div class="item-name">${escapeHtml(p.Pertanyaan).slice(0,80)}</div>
+      <div class="hint">Penanya: ${escapeHtml(p.NamaPenanya)} (${p.StatusPenanya})</div>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function hapusKunjungan(id){
+  if(!confirm('Hapus data ini?')) return;
+  google.script.run.withSuccessHandler(function(res){
+    if(res.success) loadRiwayat(); else alert(res.message);
+  }).deleteKunjungan(id, CURRENT.nama);
+}
+
+// ---------- dashboard ----------
+function loadDashboard(){
+  const mulai = document.getElementById('d-mulai').value;
+  const selesai = document.getElementById('d-selesai').value;
+  document.getElementById('dashboardResult').innerHTML = '<div class="empty">Memuat...</div>';
+  google.script.run.withSuccessHandler(renderDashboard).getDashboard(CURRENT.nama, CURRENT.role, mulai, selesai);
+}
+
+function renderDashboard(res){
+  const names = Object.keys(res.rekap);
+  const el = document.getElementById('dashboardResult');
+  if(names.length===0){ el.innerHTML = '<div class="empty">Belum ada data pada rentang tanggal ini.</div>'; return; }
+  const cols = [['verifikasiResep','Verif. resep'],['rekonsiliasi','Rekon'],['pto','PTO'],['edukasi','Edukasi'],
+    ['konseling','Konseling'],['pio','PIO'],['meso','MESO'],['obatRajal','Obat rajal'],['konfirmasiRajal','Konf. rajal'],['iter','Iter']];
+  let html = '<div class="card scroll-x"><table><tr><th>Apoteker</th>' + cols.map(c=>'<th>'+c[1]+'</th>').join('') + '</tr>';
+  const totals = {}; cols.forEach(c=>totals[c[0]]=0);
+  names.forEach(n=>{
+    const r = res.rekap[n];
+    html += '<tr><td>'+escapeHtml(n)+'</td>' + cols.map(c=>{ totals[c[0]]+=r[c[0]]||0; return '<td>'+(r[c[0]]||0)+'</td>'; }).join('') + '</tr>';
+  });
+  html += '<tr class="totals"><td>TOTAL</td>' + cols.map(c=>'<td>'+totals[c[0]]+'</td>').join('') + '</tr>';
+  html += '</table></div>';
+  el.innerHTML = html;
+}
+
+// ---------- utils ----------
+function fmtDate(d){ if(!d) return '-'; const dt = new Date(d); return dt.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}); }
+function escapeHtml(s){ return (s||'').toString().replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+</script>
+</body>
+</html>
