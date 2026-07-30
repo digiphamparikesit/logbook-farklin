@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-<base target="_top">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Logbook Apoteker</title>
@@ -205,12 +204,28 @@
 </div>
 
 <script>
+// GANTI dengan URL Web App Apps Script Anda (Deploy > New deployment > Web app), diakhiri /exec
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwhuGT8SdgoYV4iXFNoGiSPb_vx1_5muZowu_LT86x1DraxeWi63XCvBZ0xV7ADiq2q3Q/exec';
+
 let CURRENT = { nama: null, role: null };
 let selectedChips = {};
 
+// panggil backend Apps Script lewat POST (tanpa header custom, supaya lolos tanpa preflight CORS)
+function callApi(action, payload){
+  return fetch(WEBAPP_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: action, payload: payload || {} })
+  })
+  .then(function(r){ return r.json(); })
+  .catch(function(err){
+    console.error('API error:', err);
+    return { success:false, message:'Gagal menghubungi server. Cek koneksi internet.' };
+  });
+}
+
 // ---------- init ----------
 window.onload = function(){
-  google.script.run.withSuccessHandler(populateApotekerLogin).getApotekerList();
+  callApi('getApotekerList').then(populateApotekerLogin);
   const today = new Date().toISOString().slice(0,10);
   document.getElementById('k-tgl').value = today;
   document.getElementById('p-tgl').value = today;
@@ -230,22 +245,23 @@ function doLogin(){
   const pin = document.getElementById('loginPin').value;
   const msg = document.getElementById('loginMsg');
   if(!nama || !pin){ msg.innerHTML = '<div class="err">Pilih nama dan isi PIN.</div>'; return; }
-  msg.innerHTML = '';
-  google.script.run.withSuccessHandler(function(res){
+  msg.innerHTML = '<div class="hint">Memeriksa...</div>';
+  callApi('login', { nama: nama, pin: pin }).then(function(res){
     if(!res.success){ msg.innerHTML = '<div class="err">'+res.message+'</div>'; return; }
+    msg.innerHTML = '';
     CURRENT.nama = res.nama; CURRENT.role = res.role;
     document.getElementById('view-login').style.display='none';
     document.getElementById('view-app').style.display='block';
     document.getElementById('whoami').textContent = res.nama + ' · ' + (res.role==='admin'?'Admin':'Apoteker');
-    google.script.run.withSuccessHandler(function(list){
+    callApi('getRuanganList').then(function(list){
       document.getElementById('k-ruangan').innerHTML = list.map(r=>`<option>${r}</option>`).join('');
-    }).getRuanganList();
+    });
     if(res.role !== 'admin'){
       document.getElementById('dashTitle').textContent = 'Rekap kegiatan saya';
     } else {
       document.getElementById('dashTitle').textContent = 'Rekap kegiatan semua apoteker';
     }
-  }).login(nama, pin);
+  });
 }
 
 function logout(){
@@ -293,16 +309,18 @@ function submitKunjungan(){
     iter: !!selectedChips.iter
   };
   if(!data.namaPasien){ document.getElementById('kMsg').innerHTML='<div class="err">Nama pasien wajib diisi.</div>'; return; }
-  document.getElementById('kMsg').innerHTML = '';
-  google.script.run.withSuccessHandler(function(res){
+  document.getElementById('kMsg').innerHTML = '<div class="hint">Menyimpan...</div>';
+  callApi('addKunjungan', data).then(function(res){
     if(res.success){
       document.getElementById('kMsg').innerHTML = '<div class="ok">Tersimpan.</div>';
       document.getElementById('k-pasien').value=''; document.getElementById('k-terapi').value='';
       document.getElementById('k-followup').value='';
       document.querySelectorAll('#k-chips .chip').forEach(c=>c.classList.remove('on'));
       selectedChips = {};
+    } else {
+      document.getElementById('kMsg').innerHTML = '<div class="err">'+res.message+'</div>';
     }
-  }).addKunjungan(data);
+  });
 }
 
 // ---------- submit PIO ----------
@@ -318,14 +336,16 @@ function submitPIO(){
     waktuJawab: document.getElementById('p-waktu').value
   };
   if(!data.pertanyaan || !data.jawaban){ document.getElementById('pMsg').innerHTML='<div class="err">Pertanyaan dan jawaban wajib diisi.</div>'; return; }
-  document.getElementById('pMsg').innerHTML = '';
-  google.script.run.withSuccessHandler(function(res){
+  document.getElementById('pMsg').innerHTML = '<div class="hint">Menyimpan...</div>';
+  callApi('addPIO', data).then(function(res){
     if(res.success){
       document.getElementById('pMsg').innerHTML = '<div class="ok">Tersimpan.</div>';
       document.getElementById('p-nama').value=''; document.getElementById('p-pertanyaan').value='';
       document.getElementById('p-jawaban').value=''; document.getElementById('p-pustaka').value='';
+    } else {
+      document.getElementById('pMsg').innerHTML = '<div class="err">'+res.message+'</div>';
     }
-  }).addPIO(data);
+  });
 }
 
 // ---------- riwayat ----------
@@ -333,7 +353,7 @@ function loadRiwayat(){
   const mulai = document.getElementById('r-mulai').value;
   const selesai = document.getElementById('r-selesai').value;
   document.getElementById('riwayatList').innerHTML = '<div class="empty">Memuat...</div>';
-  google.script.run.withSuccessHandler(renderRiwayat).getRiwayatSaya(CURRENT.nama, mulai, selesai);
+  callApi('getRiwayatSaya', { apoteker: CURRENT.nama, tanggalMulai: mulai, tanggalSelesai: selesai }).then(renderRiwayat);
 }
 
 function renderRiwayat(data){
@@ -367,9 +387,9 @@ function renderRiwayat(data){
 
 function hapusKunjungan(id){
   if(!confirm('Hapus data ini?')) return;
-  google.script.run.withSuccessHandler(function(res){
+  callApi('deleteKunjungan', { id: id, apoteker: CURRENT.nama }).then(function(res){
     if(res.success) loadRiwayat(); else alert(res.message);
-  }).deleteKunjungan(id, CURRENT.nama);
+  });
 }
 
 // ---------- dashboard ----------
@@ -377,7 +397,7 @@ function loadDashboard(){
   const mulai = document.getElementById('d-mulai').value;
   const selesai = document.getElementById('d-selesai').value;
   document.getElementById('dashboardResult').innerHTML = '<div class="empty">Memuat...</div>';
-  google.script.run.withSuccessHandler(renderDashboard).getDashboard(CURRENT.nama, CURRENT.role, mulai, selesai);
+  callApi('getDashboard', { requesterNama: CURRENT.nama, requesterRole: CURRENT.role, tanggalMulai: mulai, tanggalSelesai: selesai }).then(renderDashboard);
 }
 
 function renderDashboard(res){
