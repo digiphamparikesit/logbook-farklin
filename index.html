@@ -60,6 +60,11 @@
   /* ---- cards / forms ---- */
   .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;}
   .card h2{font-size:15px;margin:0 0 12px;color:var(--text);}
+  .accordion-toggle{width:100%;background:none;border:none;padding:0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+  .accordion-toggle h2{margin:0;}
+  .accordion-toggle .chev{width:18px;height:18px;stroke:var(--text-muted);fill:none;stroke-width:2;transition:transform .15s;flex-shrink:0;}
+  .accordion-toggle.open .chev{transform:rotate(180deg);}
+  .accordion-body{margin-top:12px;}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
   @media (max-width:480px){ .row3{grid-template-columns:1fr;} }
@@ -169,33 +174,43 @@
         <div class="kunjungan-grid">
 
           <div class="card panel-kiri">
-            <h2>Catat kunjungan pasien</h2>
-            <label>Tanggal kegiatan</label>
-            <input type="date" id="k-tgl">
-            <label>Ruangan</label>
-            <select id="k-ruangan"></select>
-            <label>Nama pasien</label>
-            <input id="k-pasien" placeholder="Nama pasien">
-            <label>Tipe pasien</label>
-            <div class="chip-group" id="k-tipe-chips"></div>
+            <button type="button" class="accordion-toggle" onclick="toggleAccordion('acc-kiri', this)">
+              <h2>Catat kunjungan pasien</h2>
+              <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div id="acc-kiri" class="accordion-body" style="display:none">
+              <label>Tanggal kegiatan</label>
+              <input type="date" id="k-tgl">
+              <label>Ruangan</label>
+              <select id="k-ruangan"></select>
+              <label>Nama pasien</label>
+              <input id="k-pasien" placeholder="Nama pasien">
+              <label>Tipe pasien</label>
+              <div class="chip-group" id="k-tipe-chips"></div>
+            </div>
           </div>
 
           <div class="card panel-cari">
-            <h2>Cari riwayat terapi pasien</h2>
-            <div class="hint" style="margin-bottom:10px">Riwayat kunjungan pasien yang sama, lintas semua apoteker.</div>
+            <button type="button" class="accordion-toggle" onclick="toggleAccordion('acc-cari', this)">
+              <h2>Cari riwayat terapi pasien</h2>
+              <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div id="acc-cari" class="accordion-body" style="display:none">
+              <div class="hint" style="margin-bottom:10px">Riwayat kunjungan pasien yang sama, lintas semua apoteker.</div>
 
-            <label>Tipe pasien</label>
-            <div class="chip-group" id="s-tipe-chips"></div>
+              <label>Tipe pasien</label>
+              <div class="chip-group" id="s-tipe-chips"></div>
 
-            <label>Dari tanggal</label>
-            <input type="date" id="s-mulai">
-            <label>Sampai tanggal</label>
-            <input type="date" id="s-selesai">
+              <label>Dari tanggal</label>
+              <input type="date" id="s-mulai">
+              <label>Sampai tanggal</label>
+              <input type="date" id="s-selesai">
 
-            <label>Nama pasien</label>
-            <input id="s-nama" placeholder="Ketik nama pasien..." onkeydown="if(event.key==='Enter') cariRiwayatPasien()">
-            <button class="secondary" style="margin-top:12px" onclick="cariRiwayatPasien()">Cari riwayat</button>
-            <div id="riwayatPasienResult" style="margin-top:14px"></div>
+              <label>Nama pasien</label>
+              <input id="s-nama" placeholder="Ketik nama pasien..." onkeydown="if(event.key==='Enter') cariRiwayatPasien()">
+              <button class="secondary" style="margin-top:12px" onclick="cariRiwayatPasien()">Cari riwayat</button>
+              <div id="riwayatPasienResult" style="margin-top:14px"></div>
+            </div>
           </div>
 
           <div class="card panel-kanan">
@@ -404,6 +419,13 @@ function logout(){
 }
 
 // ---------- navigasi (menu grid + halaman) ----------
+function toggleAccordion(bodyId, btn){
+  const body = document.getElementById(bodyId);
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  btn.classList.toggle('open', !isOpen);
+}
+
 function showPage(name){
   ['menu','kunjungan','pio','riwayat','dashboard'].forEach(function(p){
     document.getElementById('page-'+p).style.display = (p===name) ? 'block' : 'none';
