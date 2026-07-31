@@ -75,6 +75,10 @@
   textarea.pio-jawaban{min-height:300px;}
   @media (min-width:820px){ .pio-grid{grid-template-columns:1fr 2fr;align-items:start;} }
 
+  .dash-grid{display:grid;grid-template-columns:1fr;gap:14px;}
+  .dash-grid .panel-kiri{margin-bottom:0;}
+  @media (min-width:820px){ .dash-grid{grid-template-columns:1fr 2fr;align-items:start;} }
+
   .chip-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
   .chip{border:1px solid var(--border-strong);border-radius:20px;padding:8px 14px;font-size:13px;cursor:pointer;color:var(--text-secondary);user-select:none;}
   .chip.on{background:var(--teal-light);border-color:var(--teal);color:var(--teal-dark);font-weight:600;}
@@ -254,32 +258,45 @@
 
       <!-- HALAMAN: Dashboard -->
       <section id="page-dashboard" style="display:none">
-        <div class="card">
-          <h2 id="dashTitle">Rekap kegiatan</h2>
+        <div class="dash-grid">
 
-          <div id="adminFilters" style="display:none">
-            <label>Filter cepat (admin)</label>
-            <div class="admin-filter-row">
-              <select id="d-filter-apoteker"><option value="">Semua apoteker</option></select>
-              <select id="d-filter-bulan"></select>
-              <select id="d-filter-tahun"></select>
+          <div class="card panel-kiri">
+            <h2 id="dashTitle">Rekap kegiatan</h2>
+
+            <div id="adminFilters" style="display:none">
+              <label>Filter cepat (admin)</label>
+              <div class="admin-filter-row">
+                <select id="d-filter-apoteker"><option value="">Semua apoteker</option></select>
+                <select id="d-filter-bulan"></select>
+                <select id="d-filter-tahun"></select>
+              </div>
+              <div class="hint">Pilih bulan &amp; tahun untuk otomatis mengisi rentang tanggal di bawah.</div>
             </div>
-            <div class="hint">Pilih bulan &amp; tahun untuk otomatis mengisi rentang tanggal di bawah.</div>
+
+            <label>Dari tanggal</label>
+            <input type="date" id="d-mulai">
+            <label>Sampai tanggal</label>
+            <input type="date" id="d-selesai">
+            <button class="secondary" onclick="loadDashboard()" style="margin-top:12px">Tampilkan rekap</button>
           </div>
 
-          <div class="row2">
-            <div><label>Dari tanggal</label><input type="date" id="d-mulai"></div>
-            <div><label>Sampai tanggal</label><input type="date" id="d-selesai"></div>
+          <div class="panel-kanan">
+            <div id="dashboardResult"></div>
+            <div class="card">
+              <h2>Grafik tren harian per jenis kegiatan</h2>
+              <div id="chartEmpty" class="empty">Tampilkan rekap dulu untuk melihat grafik.</div>
+              <canvas id="chartTren" height="110" style="display:none"></canvas>
+            </div>
           </div>
-          <button class="secondary" onclick="loadDashboard()" style="margin-top:12px">Tampilkan rekap</button>
+
         </div>
-        <div id="dashboardResult"></div>
       </section>
     </main>
   </div>
 
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <script>
 // GANTI dengan URL Web App Apps Script Anda (Deploy > New deployment > Web app), diakhiri /exec
 const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwhuGT8SdgoYV4iXFNoGiSPb_vx1_5muZowu_LT86x1DraxeWi63XCvBZ0xV7ADiq2q3Q/exec';
@@ -531,17 +548,16 @@ function applyBulanTahun(){
 function loadDashboard(){
   const mulai = document.getElementById('d-mulai').value;
   const selesai = document.getElementById('d-selesai').value;
+  const filterApt = CURRENT.role === 'admin' ? document.getElementById('d-filter-apoteker').value : '';
   document.getElementById('dashboardResult').innerHTML = '<div class="empty">Memuat...</div>';
   callApi('getDashboard', { requesterNama: CURRENT.nama, requesterRole: CURRENT.role, tanggalMulai: mulai, tanggalSelesai: selesai }).then(function(res){
-    if(CURRENT.role === 'admin'){
-      const filterApt = document.getElementById('d-filter-apoteker').value;
-      if(filterApt){
-        const only = {}; if(res.rekap[filterApt]) only[filterApt] = res.rekap[filterApt];
-        res = Object.assign({}, res, { rekap: only });
-      }
+    if(CURRENT.role === 'admin' && filterApt){
+      const only = {}; if(res.rekap[filterApt]) only[filterApt] = res.rekap[filterApt];
+      res = Object.assign({}, res, { rekap: only });
     }
     renderDashboard(res);
   });
+  callApi('getDashboardSeries', { requesterNama: CURRENT.nama, requesterRole: CURRENT.role, tanggalMulai: mulai, tanggalSelesai: selesai, filterApoteker: filterApt }).then(renderChart);
 }
 
 function renderDashboard(res){
@@ -559,6 +575,54 @@ function renderDashboard(res){
   html += '<tr class="totals"><td>TOTAL</td>' + cols.map(c=>'<td>'+totals[c[0]]+'</td>').join('') + '</tr>';
   html += '</table></div>';
   el.innerHTML = html;
+}
+
+let CHART_INSTANCE = null;
+const CHART_COLORS = {
+  verifikasiResep:'#0F6E56', rekonsiliasi:'#185FA5', pto:'#B5541A', edukasi:'#7C3AED',
+  konseling:'#C2185B', pio:'#00838F', meso:'#854F0B', obatRajal:'#2E7D32',
+  konfirmasiRajal:'#5D4037', iter:'#616161'
+};
+const CHART_LABELS = {
+  verifikasiResep:'Verif. resep', rekonsiliasi:'Rekonsiliasi', pto:'PTO', edukasi:'Edukasi',
+  konseling:'Konseling', pio:'PIO', meso:'MESO', obatRajal:'Obat rajal',
+  konfirmasiRajal:'Konfirmasi rajal', iter:'Iter'
+};
+
+function renderChart(res){
+  const canvas = document.getElementById('chartTren');
+  const empty = document.getElementById('chartEmpty');
+  if(!res || !res.dates || res.dates.length===0){
+    canvas.style.display='none'; empty.style.display='block';
+    if(CHART_INSTANCE){ CHART_INSTANCE.destroy(); CHART_INSTANCE=null; }
+    return;
+  }
+  empty.style.display='none'; canvas.style.display='block';
+
+  const labels = res.dates.map(d=>{
+    const dt = new Date(d);
+    return dt.toLocaleDateString('id-ID',{day:'2-digit',month:'short'});
+  });
+  const datasets = Object.keys(res.series).map(key=>({
+    label: CHART_LABELS[key],
+    data: res.series[key],
+    borderColor: CHART_COLORS[key],
+    backgroundColor: CHART_COLORS[key],
+    tension: 0.3,
+    pointRadius: 3
+  }));
+
+  if(CHART_INSTANCE){ CHART_INSTANCE.destroy(); }
+  CHART_INSTANCE = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: { labels: labels, datasets: datasets },
+    options: {
+      responsive: true,
+      interaction: { mode:'index', intersect:false },
+      scales: { y: { beginAtZero:true, ticks:{ precision:0 } } },
+      plugins: { legend: { position:'bottom', labels:{ boxWidth:12, font:{ size:11 } } } }
+    }
+  });
 }
 
 // ---------- utils ----------
