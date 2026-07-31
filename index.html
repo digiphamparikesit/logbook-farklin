@@ -82,6 +82,7 @@
   .chip-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
   .chip{border:1px solid var(--border-strong);border-radius:20px;padding:8px 14px;font-size:13px;cursor:pointer;color:var(--text-secondary);user-select:none;}
   .chip.on{background:var(--teal-light);border-color:var(--teal);color:var(--teal-dark);font-weight:600;}
+  .chip-single{background:var(--blue-light);border-color:var(--blue);color:var(--blue);}
 
   .item{border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;background:#fff;}
   .item-top{display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-bottom:4px;}
@@ -170,6 +171,11 @@
             <select id="k-ruangan"></select>
             <label>Nama pasien</label>
             <input id="k-pasien" placeholder="Nama pasien">
+            <label>Tipe pasien</label>
+            <div class="chip-group" id="k-tipe-chips">
+              <div class="chip" data-tipe="RANAP">RANAP</div>
+              <div class="chip" data-tipe="RAJAL">RAJAL</div>
+            </div>
           </div>
 
           <div class="card panel-kanan">
@@ -208,9 +214,32 @@
           </div>
 
         </div>
-      </section>
 
-      <!-- HALAMAN: PIO -->
+        <div class="card" style="margin-top:14px">
+          <h2>Cari riwayat terapi pasien</h2>
+          <div class="hint" style="margin-bottom:10px">Mencari riwayat kunjungan pasien yang sama, lintas semua apoteker.</div>
+
+          <label>Tipe pasien</label>
+          <div class="chip-group" id="s-tipe-chips">
+            <div class="chip on" data-tipe="">Semua</div>
+            <div class="chip" data-tipe="RANAP">RANAP</div>
+            <div class="chip" data-tipe="RAJAL">RAJAL</div>
+          </div>
+
+          <div class="row2" style="margin-top:12px">
+            <div><label style="margin-top:0">Dari tanggal</label><input type="date" id="s-mulai"></div>
+            <div><label style="margin-top:0">Sampai tanggal</label><input type="date" id="s-selesai"></div>
+          </div>
+
+          <label>Nama pasien</label>
+          <div class="row2">
+            <input id="s-nama" placeholder="Ketik nama pasien..." style="grid-column:1/3" onkeydown="if(event.key==='Enter') cariRiwayatPasien()">
+          </div>
+          <button class="secondary" style="margin-top:12px" onclick="cariRiwayatPasien()">Cari riwayat</button>
+
+          <div id="riwayatPasienResult" style="margin-top:14px"></div>
+        </div>
+      </section>
       <section id="page-pio" style="display:none">
         <div class="pio-grid">
 
@@ -386,11 +415,25 @@ function goHome(){ showPage('menu'); }
 
 // ---------- chips ----------
 document.addEventListener('click', function(e){
-  if(e.target.classList.contains('chip')){
-    e.target.classList.toggle('on');
-    selectedChips[e.target.dataset.key] = e.target.classList.contains('on');
+  if(!e.target.classList.contains('chip')) return;
+
+  // chip bertipe single-select (data-tipe): dalam satu grup, cuma boleh 1 aktif
+  if(e.target.dataset.tipe !== undefined){
+    const group = e.target.closest('.chip-group');
+    group.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+    e.target.classList.add('on');
+    return;
   }
+
+  // chip multi-select (jenis kegiatan)
+  e.target.classList.toggle('on');
+  selectedChips[e.target.dataset.key] = e.target.classList.contains('on');
 });
+
+function getTipePasienTerpilih(groupId){
+  const el = document.querySelector('#'+groupId+' .chip.on');
+  return el ? el.dataset.tipe : '';
+}
 
 // ---------- picker obat -> kolom terapi ----------
 function tambahObatKeTerapi(){
@@ -411,6 +454,7 @@ function submitKunjungan(){
     tglKegiatan: document.getElementById('k-tgl').value,
     ruangan: document.getElementById('k-ruangan').value,
     namaPasien: document.getElementById('k-pasien').value,
+    tipePasien: getTipePasienTerpilih('k-tipe-chips'),
     terapi: document.getElementById('k-terapi').value,
     followUp: document.getElementById('k-followup').value,
     rekonsiliasi: !!selectedChips.rekonsiliasi, pto: !!selectedChips.pto,
@@ -427,6 +471,7 @@ function submitKunjungan(){
       document.getElementById('k-pasien').value=''; document.getElementById('k-terapi').value='';
       document.getElementById('k-followup').value='';
       document.querySelectorAll('#k-chips .chip').forEach(c=>c.classList.remove('on'));
+      document.querySelectorAll('#k-tipe-chips .chip').forEach(c=>c.classList.remove('on'));
       selectedChips = {};
     } else {
       document.getElementById('kMsg').innerHTML = '<div class="err">'+res.message+'</div>';
@@ -642,6 +687,32 @@ function renderChart(res){
     canvas.style.display='none'; empty.style.display='block';
     empty.innerHTML = '<div class="err">Grafik gagal digambar: '+err.message+'</div>';
   }
+}
+
+// ---------- cari riwayat terapi pasien ----------
+function cariRiwayatPasien(){
+  const nama = document.getElementById('s-nama').value.trim();
+  const tipe = getTipePasienTerpilih('s-tipe-chips');
+  const mulai = document.getElementById('s-mulai').value;
+  const selesai = document.getElementById('s-selesai').value;
+  const el = document.getElementById('riwayatPasienResult');
+  if(!nama){ el.innerHTML = '<div class="err">Isi nama pasien yang dicari dulu.</div>'; return; }
+  el.innerHTML = '<div class="empty">Mencari...</div>';
+  callApi('searchRiwayatPasien', { namaPasien: nama, tipePasien: tipe, tanggalMulai: mulai, tanggalSelesai: selesai })
+    .then(renderRiwayatPasien);
+}
+
+function renderRiwayatPasien(res){
+  const el = document.getElementById('riwayatPasienResult');
+  if(!res || res.success === false){ el.innerHTML = '<div class="err">'+(res&&res.message?res.message:'Gagal mencari data.')+'</div>'; return; }
+  if(res.hasil.length===0){ el.innerHTML = '<div class="empty">Tidak ditemukan riwayat untuk pencarian ini.</div>'; return; }
+  let html = '<div class="scroll-x"><table><tr><th>Tanggal</th><th>Ruangan</th><th>Tipe</th><th>Terapi</th><th>Apoteker</th></tr>';
+  res.hasil.forEach(r=>{
+    html += '<tr><td>'+fmtDate(r.TglKegiatan)+'</td><td>'+escapeHtml(r.Ruangan)+'</td><td>'+escapeHtml(r.TipePasien||'-')+'</td>'
+      + '<td style="white-space:pre-wrap">'+escapeHtml(r.Terapi)+'</td><td>'+escapeHtml(r.Apoteker)+'</td></tr>';
+  });
+  html += '</table></div>';
+  el.innerHTML = html;
 }
 
 // ---------- utils ----------
