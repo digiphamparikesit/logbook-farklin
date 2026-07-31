@@ -20,16 +20,18 @@
   @media (min-width:760px){ body{display:flex;justify-content:center;} #app{box-shadow:0 0 0 1px var(--border);} main{padding:24px 32px;} }
 
   /* ---- header ---- */
-  header{background:var(--teal);color:#fff;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:30;}
+  header{background:var(--teal);color:#fff;padding:14px 18px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:30;}
+  header button.back{background:rgba(255,255,255,.15);color:#fff;border:none;width:34px;height:34px;border-radius:8px;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  header .titles{flex:1;}
   header .title{font-size:16px;font-weight:600;}
   header .who{font-size:12px;opacity:.85;}
-  header button{background:rgba(255,255,255,.15);color:#fff;border:none;padding:6px 10px;border-radius:8px;font-size:12px;}
+  header button.logout{background:rgba(255,255,255,.15);color:#fff;border:none;padding:6px 10px;border-radius:8px;font-size:12px;flex-shrink:0;}
 
-  main{flex:1;padding:16px;padding-bottom:80px;}
+  main{flex:1;padding:16px;padding-bottom:32px;}
 
   /* ---- login ---- */
   .login-wrap{display:flex;flex-direction:column;justify-content:center;min-height:100vh;padding:24px;}
-  .login-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px 22px;}
+  .login-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px 22px;max-width:420px;margin:0 auto;width:100%;}
   .login-card h1{font-size:19px;margin:0 0 4px;color:var(--teal-dark);}
   .login-card p{font-size:13px;color:var(--text-secondary);margin:0 0 20px;}
 
@@ -44,15 +46,17 @@
   .err{color:var(--danger);font-size:13px;margin-top:10px;}
   .ok{color:var(--teal-dark);font-size:13px;margin-top:10px;}
 
-  /* ---- tabs / nav ---- */
-  nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:flex;max-width:720px;margin:0 auto;}
-  nav button{flex:1;background:none;border:none;padding:8px 4px 10px;font-size:11px;color:var(--text-muted);font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;}
-  nav button svg{width:22px;height:22px;stroke:var(--text-muted);fill:none;stroke-width:1.8;}
-  nav button.active{color:var(--teal);}
-  nav button.active svg{stroke:var(--teal);}
-  .admin-filter-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;}
-  @media (max-width:480px){ .admin-filter-row{grid-template-columns:1fr 1fr;} .admin-filter-row select:first-child{grid-column:1 / -1;} }
+  /* ---- menu grid (halaman utama setelah login) ---- */
+  .menu-eyebrow{font-size:11px;letter-spacing:.06em;font-weight:700;color:var(--text-muted);margin:4px 0 14px;}
+  .menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px 12px;}
+  @media (max-width:420px){ .menu-grid{grid-template-columns:repeat(3,1fr);gap:14px 8px;} }
+  .menu-tile{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;padding:4px;}
+  .menu-tile .icon-box{width:60px;height:60px;border-radius:16px;background:linear-gradient(160deg,var(--teal),var(--teal-dark));display:flex;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(8,80,65,.25);transition:transform .1s;}
+  .menu-tile:active .icon-box{transform:scale(.94);}
+  .menu-tile .icon-box svg{width:28px;height:28px;stroke:#fff;fill:none;stroke-width:1.8;}
+  .menu-tile .label{font-size:12px;font-weight:600;color:var(--text);text-align:center;line-height:1.3;}
 
+  /* ---- cards / forms ---- */
   .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;}
   .card h2{font-size:15px;margin:0 0 12px;color:var(--text);}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
@@ -60,10 +64,6 @@
   .chip-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
   .chip{border:1px solid var(--border-strong);border-radius:20px;padding:8px 14px;font-size:13px;cursor:pointer;color:var(--text-secondary);user-select:none;}
   .chip.on{background:var(--teal-light);border-color:var(--teal);color:var(--teal-dark);font-weight:600;}
-
-  .seg{display:flex;background:var(--bg);border-radius:8px;padding:3px;margin-bottom:14px;}
-  .seg button{flex:1;background:none;border:none;padding:8px;border-radius:6px;font-size:13px;font-weight:600;color:var(--text-secondary);}
-  .seg button.active{background:#fff;color:var(--teal-dark);box-shadow:0 1px 2px rgba(0,0,0,.08);}
 
   .item{border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;background:#fff;}
   .item-top{display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-bottom:4px;}
@@ -82,6 +82,8 @@
   .scroll-x{overflow-x:auto;}
   .empty{text-align:center;color:var(--text-muted);font-size:13px;padding:30px 10px;}
   .hint{font-size:11.5px;color:var(--text-muted);margin-top:4px;}
+  .admin-filter-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;}
+  @media (max-width:480px){ .admin-filter-row{grid-template-columns:1fr 1fr;} .admin-filter-row select:first-child{grid-column:1 / -1;} }
 </style>
 </head>
 <body>
@@ -104,22 +106,41 @@
   <!-- APP -->
   <div id="view-app" style="display:none">
     <header>
-      <div>
-        <div class="title">Logbook apoteker</div>
+      <button class="back" id="btnBack" onclick="goHome()" style="display:none">&#8592;</button>
+      <div class="titles">
+        <div class="title" id="headerTitle">Logbook apoteker</div>
         <div class="who" id="whoami"></div>
       </div>
-      <button onclick="logout()">Keluar</button>
+      <button class="logout" onclick="logout()">Keluar</button>
     </header>
 
     <main>
-      <!-- TAB: INPUT -->
-      <section id="tab-input">
-        <div class="seg">
-          <button id="seg-kunjungan" class="active" onclick="switchInputSeg('kunjungan')">Kunjungan pasien</button>
-          <button id="seg-pio" onclick="switchInputSeg('pio')">PIO</button>
+      <!-- HALAMAN UTAMA: menu grid -->
+      <section id="page-menu">
+        <div class="menu-eyebrow">PILIH MENU</div>
+        <div class="menu-grid">
+          <button class="menu-tile" onclick="showPage('kunjungan')">
+            <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M9 12h6M9 16h6M9 8h2"/><path d="M7 3h7l5 5v13H7z"/></svg></div>
+            <div class="label">Kunjungan Pasien</div>
+          </button>
+          <button class="menu-tile" onclick="showPage('pio')">
+            <div class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg></div>
+            <div class="label">PIO</div>
+          </button>
+          <button class="menu-tile" onclick="showPage('riwayat')">
+            <div class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+            <div class="label">Riwayat Saya</div>
+          </button>
+          <button class="menu-tile" onclick="showPage('dashboard')">
+            <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg></div>
+            <div class="label">Dashboard</div>
+          </button>
         </div>
+      </section>
 
-        <div id="form-kunjungan" class="card">
+      <!-- HALAMAN: Kunjungan Pasien -->
+      <section id="page-kunjungan" style="display:none">
+        <div class="card">
           <h2>Catat kunjungan pasien</h2>
           <label>Tanggal kegiatan</label>
           <input type="date" id="k-tgl">
@@ -146,8 +167,11 @@
           <button class="primary" onclick="submitKunjungan()">Simpan kunjungan</button>
           <div id="kMsg"></div>
         </div>
+      </section>
 
-        <div id="form-pio" class="card" style="display:none">
+      <!-- HALAMAN: PIO -->
+      <section id="page-pio" style="display:none">
+        <div class="card">
           <h2>Catat PIO (pertanyaan informasi obat)</h2>
           <label>Tanggal PIO</label>
           <input type="date" id="p-tgl">
@@ -172,8 +196,8 @@
         </div>
       </section>
 
-      <!-- TAB: RIWAYAT -->
-      <section id="tab-riwayat" style="display:none">
+      <!-- HALAMAN: Riwayat -->
+      <section id="page-riwayat" style="display:none">
         <div class="card">
           <h2>Riwayat saya</h2>
           <div class="row2">
@@ -185,8 +209,8 @@
         <div id="riwayatList"></div>
       </section>
 
-      <!-- TAB: DASHBOARD -->
-      <section id="tab-dashboard" style="display:none">
+      <!-- HALAMAN: Dashboard -->
+      <section id="page-dashboard" style="display:none">
         <div class="card">
           <h2 id="dashTitle">Rekap kegiatan</h2>
 
@@ -209,21 +233,6 @@
         <div id="dashboardResult"></div>
       </section>
     </main>
-
-    <nav>
-      <button id="nav-input" class="active" onclick="switchTab('input')">
-        <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-        Input harian
-      </button>
-      <button id="nav-riwayat" onclick="switchTab('riwayat')">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-        Riwayat saya
-      </button>
-      <button id="nav-dashboard" onclick="switchTab('dashboard')">
-        <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>
-        Dashboard
-      </button>
-    </nav>
   </div>
 
 </div>
@@ -234,6 +243,14 @@ const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwhuGT8SdgoYV4iXFNoG
 
 let CURRENT = { nama: null, role: null };
 let selectedChips = {};
+let APOTEKER_LIST = [];
+
+const PAGE_TITLES = {
+  kunjungan: 'Kunjungan pasien',
+  pio: 'PIO',
+  riwayat: 'Riwayat saya',
+  dashboard: 'Dashboard'
+};
 
 // panggil backend Apps Script lewat POST (tanpa header custom, supaya lolos tanpa preflight CORS)
 function callApi(action, payload){
@@ -282,12 +299,8 @@ function doLogin(){
     callApi('getRuanganList').then(function(list){
       document.getElementById('k-ruangan').innerHTML = list.map(r=>`<option>${r}</option>`).join('');
     });
-    if(res.role !== 'admin'){
-      document.getElementById('dashTitle').textContent = 'Rekap kegiatan saya';
-    } else {
-      document.getElementById('dashTitle').textContent = 'Rekap kegiatan semua apoteker';
-      setupAdminFilters();
-    }
+    if(res.role === 'admin') setupAdminFilters();
+    goHome();
   });
 }
 
@@ -298,19 +311,15 @@ function logout(){
   document.getElementById('loginPin').value='';
 }
 
-// ---------- nav ----------
-function switchTab(tab){
-  ['input','riwayat','dashboard'].forEach(t=>{
-    document.getElementById('tab-'+t).style.display = (t===tab)?'block':'none';
-    document.getElementById('nav-'+t).classList.toggle('active', t===tab);
+// ---------- navigasi (menu grid + halaman) ----------
+function showPage(name){
+  ['menu','kunjungan','pio','riwayat','dashboard'].forEach(function(p){
+    document.getElementById('page-'+p).style.display = (p===name) ? 'block' : 'none';
   });
+  document.getElementById('btnBack').style.display = (name==='menu') ? 'none' : 'flex';
+  document.getElementById('headerTitle').textContent = (name==='menu') ? 'Logbook apoteker' : PAGE_TITLES[name];
 }
-function switchInputSeg(seg){
-  document.getElementById('form-kunjungan').style.display = seg==='kunjungan'?'block':'none';
-  document.getElementById('form-pio').style.display = seg==='pio'?'block':'none';
-  document.getElementById('seg-kunjungan').classList.toggle('active', seg==='kunjungan');
-  document.getElementById('seg-pio').classList.toggle('active', seg==='pio');
-}
+function goHome(){ showPage('menu'); }
 
 // ---------- chips ----------
 document.addEventListener('click', function(e){
@@ -420,8 +429,6 @@ function hapusKunjungan(id){
 }
 
 // ---------- dashboard ----------
-let APOTEKER_LIST = [];
-
 function setupAdminFilters(){
   document.getElementById('adminFilters').style.display = 'block';
 
