@@ -20,7 +20,8 @@
   @media (min-width:760px){ body{display:flex;justify-content:center;} #app{max-width:1040px;box-shadow:0 0 0 1px var(--border);} main{padding:24px 40px;} .menu-grid{grid-template-columns:repeat(4,1fr);max-width:640px;} }
 
   /* ---- header ---- */
-  header{background:var(--teal);color:#fff;padding:14px 18px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:30;}
+  header{background:var(--teal);color:#fff;position:sticky;top:0;z-index:30;width:100vw;margin-left:calc(50% - 50vw);}
+  header .header-inner{max-width:1040px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;gap:12px;}
   header button.back{background:rgba(255,255,255,.15);color:#fff;border:none;width:34px;height:34px;border-radius:8px;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
   header .titles{flex:1;}
   header .title{font-size:16px;font-weight:600;}
@@ -60,6 +61,13 @@
   .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;}
   .card h2{font-size:15px;margin:0 0 12px;color:var(--text);}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  @media (max-width:480px){ .row3{grid-template-columns:1fr;} }
+
+  .kunjungan-grid{display:grid;grid-template-columns:1fr;gap:14px;}
+  .kunjungan-grid .panel-kiri, .kunjungan-grid .panel-kanan{margin-bottom:0;}
+  textarea.tall{min-height:140px;}
+  @media (min-width:820px){ .kunjungan-grid{grid-template-columns:280px 1fr;align-items:start;} }
 
   .chip-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
   .chip{border:1px solid var(--border-strong);border-radius:20px;padding:8px 14px;font-size:13px;cursor:pointer;color:var(--text-secondary);user-select:none;}
@@ -106,12 +114,14 @@
   <!-- APP -->
   <div id="view-app" style="display:none">
     <header>
-      <button class="back" id="btnBack" onclick="goHome()" style="display:none">&#8592;</button>
-      <div class="titles">
-        <div class="title" id="headerTitle">Logbook apoteker</div>
-        <div class="who" id="whoami"></div>
+      <div class="header-inner">
+        <button class="back" id="btnBack" onclick="goHome()" style="display:none">&#8592;</button>
+        <div class="titles">
+          <div class="title" id="headerTitle">Logbook apoteker</div>
+          <div class="who" id="whoami"></div>
+        </div>
+        <button class="logout" onclick="logout()">Keluar</button>
       </div>
-      <button class="logout" onclick="logout()">Keluar</button>
     </header>
 
     <main>
@@ -140,45 +150,53 @@
 
       <!-- HALAMAN: Kunjungan Pasien -->
       <section id="page-kunjungan" style="display:none">
-        <div class="card">
-          <h2>Catat kunjungan pasien</h2>
-          <label>Tanggal kegiatan</label>
-          <input type="date" id="k-tgl">
-          <div class="row2">
-            <div><label>Ruangan</label><select id="k-ruangan"></select></div>
-            <div><label>Nama pasien</label><input id="k-pasien" placeholder="Nama pasien"></div>
+        <div class="kunjungan-grid">
+
+          <div class="card panel-kiri">
+            <h2>Catat kunjungan pasien</h2>
+            <label>Tanggal kegiatan</label>
+            <input type="date" id="k-tgl">
+            <label>Ruangan</label>
+            <select id="k-ruangan"></select>
+            <label>Nama pasien</label>
+            <input id="k-pasien" placeholder="Nama pasien">
           </div>
-          <label>Terapi</label>
-          <div class="card" style="background:var(--bg);border-style:dashed;padding:12px;margin-bottom:10px">
-            <div class="row2">
+
+          <div class="card panel-kanan">
+            <h2>Terapi</h2>
+            <div class="row3">
               <div><label style="margin-top:0">Pilih obat</label><select id="t-obat"></select></div>
               <div><label style="margin-top:0">Dosis</label><input id="t-dosis" placeholder="mis. 1x500mg"></div>
+              <div><label style="margin-top:0">Status</label>
+                <select id="t-status">
+                  <option>BARU</option><option>LANJUT</option><option>STOP</option>
+                  <option>GANTI DOSIS</option><option>TUNDA</option>
+                </select>
+              </div>
             </div>
-            <label>Status</label>
-            <select id="t-status">
-              <option>BARU</option><option>LANJUT</option><option>STOP</option>
-              <option>GANTI DOSIS</option><option>TUNDA</option>
-            </select>
-            <button type="button" class="secondary" style="margin-top:10px" onclick="tambahObatKeTerapi()">+ Tambahkan ke terapi</button>
+            <button type="button" class="secondary" style="margin-top:10px" onclick="tambahObatKeTerapi()">+ Tambahkan terapi</button>
+            <textarea id="k-terapi" class="tall" style="margin-top:12px" placeholder="Regimen terapi... (bisa diisi manual atau otomatis lewat tombol di atas)"></textarea>
+            <div class="hint">Bisa tambah beberapa obat berulang kali — tiap klik "Tambahkan" akan menambah baris baru. Boleh juga diedit manual.</div>
+
+            <label>Follow up (opsional)</label>
+            <textarea id="k-followup"></textarea>
+
+            <label>Jenis kegiatan</label>
+            <div class="chip-group" id="k-chips">
+              <div class="chip" data-key="rekonsiliasi">Rekonsiliasi</div>
+              <div class="chip" data-key="pto">PTO</div>
+              <div class="chip" data-key="edukasi">Edukasi</div>
+              <div class="chip" data-key="konseling">Konseling</div>
+              <div class="chip" data-key="meso">MESO</div>
+              <div class="chip" data-key="verifikasiResep">Verifikasi resep</div>
+              <div class="chip" data-key="konfirmasiRajal">Konfirmasi rajal</div>
+              <div class="chip" data-key="obatRajal">Penyerahan obat rajal</div>
+              <div class="chip" data-key="iter">Resep iter</div>
+            </div>
+            <button class="primary" onclick="submitKunjungan()">Simpan kunjungan</button>
+            <div id="kMsg"></div>
           </div>
-          <textarea id="k-terapi" placeholder="Regimen terapi... (bisa diisi manual atau otomatis lewat 'Tambahkan ke terapi' di atas)"></textarea>
-          <div class="hint">Bisa tambah beberapa obat berulang kali — tiap klik "Tambahkan" akan menambah baris baru di kolom terapi ini. Boleh juga diedit manual.</div>
-          <label>Follow up (opsional)</label>
-          <textarea id="k-followup"></textarea>
-          <label>Jenis kegiatan</label>
-          <div class="chip-group" id="k-chips">
-            <div class="chip" data-key="rekonsiliasi">Rekonsiliasi</div>
-            <div class="chip" data-key="pto">PTO</div>
-            <div class="chip" data-key="edukasi">Edukasi</div>
-            <div class="chip" data-key="konseling">Konseling</div>
-            <div class="chip" data-key="meso">MESO</div>
-            <div class="chip" data-key="verifikasiResep">Verifikasi resep</div>
-            <div class="chip" data-key="konfirmasiRajal">Konfirmasi rajal</div>
-            <div class="chip" data-key="obatRajal">Penyerahan obat rajal</div>
-            <div class="chip" data-key="iter">Resep iter</div>
-          </div>
-          <button class="primary" onclick="submitKunjungan()">Simpan kunjungan</button>
-          <div id="kMsg"></div>
+
         </div>
       </section>
 
