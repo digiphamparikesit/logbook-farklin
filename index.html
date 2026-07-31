@@ -17,7 +17,7 @@
   *{box-sizing:border-box;}
   body{margin:0;font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
   #app{max-width:720px;width:100%;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
-  @media (min-width:760px){ body{display:flex;justify-content:center;} #app{box-shadow:0 0 0 1px var(--border);} main{padding:24px 32px;} }
+  @media (min-width:760px){ body{display:flex;justify-content:center;} #app{max-width:1040px;box-shadow:0 0 0 1px var(--border);} main{padding:24px 40px;} .menu-grid{grid-template-columns:repeat(4,1fr);max-width:640px;} }
 
   /* ---- header ---- */
   header{background:var(--teal);color:#fff;padding:14px 18px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:30;}
@@ -149,7 +149,20 @@
             <div><label>Nama pasien</label><input id="k-pasien" placeholder="Nama pasien"></div>
           </div>
           <label>Terapi</label>
-          <textarea id="k-terapi" placeholder="Regimen terapi..."></textarea>
+          <div class="card" style="background:var(--bg);border-style:dashed;padding:12px;margin-bottom:10px">
+            <div class="row2">
+              <div><label style="margin-top:0">Pilih obat</label><select id="t-obat"></select></div>
+              <div><label style="margin-top:0">Dosis</label><input id="t-dosis" placeholder="mis. 1x500mg"></div>
+            </div>
+            <label>Status</label>
+            <select id="t-status">
+              <option>BARU</option><option>LANJUT</option><option>STOP</option>
+              <option>GANTI DOSIS</option><option>TUNDA</option>
+            </select>
+            <button type="button" class="secondary" style="margin-top:10px" onclick="tambahObatKeTerapi()">+ Tambahkan ke terapi</button>
+          </div>
+          <textarea id="k-terapi" placeholder="Regimen terapi... (bisa diisi manual atau otomatis lewat 'Tambahkan ke terapi' di atas)"></textarea>
+          <div class="hint">Bisa tambah beberapa obat berulang kali — tiap klik "Tambahkan" akan menambah baris baru di kolom terapi ini. Boleh juga diedit manual.</div>
           <label>Follow up (opsional)</label>
           <textarea id="k-followup"></textarea>
           <label>Jenis kegiatan</label>
@@ -299,6 +312,9 @@ function doLogin(){
     callApi('getRuanganList').then(function(list){
       document.getElementById('k-ruangan').innerHTML = list.map(r=>`<option>${r}</option>`).join('');
     });
+    callApi('getObatList').then(function(list){
+      document.getElementById('t-obat').innerHTML = list.map(o=>`<option>${o}</option>`).join('');
+    });
     if(res.role === 'admin') setupAdminFilters();
     goHome();
   });
@@ -328,6 +344,18 @@ document.addEventListener('click', function(e){
     selectedChips[e.target.dataset.key] = e.target.classList.contains('on');
   }
 });
+
+// ---------- picker obat -> kolom terapi ----------
+function tambahObatKeTerapi(){
+  const obat = document.getElementById('t-obat').value;
+  const dosis = document.getElementById('t-dosis').value.trim();
+  const status = document.getElementById('t-status').value;
+  if(!obat){ alert('Pilih obat dulu.'); return; }
+  const baris = `- ${obat}${dosis ? ' ('+dosis+')' : ''} — ${status}`;
+  const ta = document.getElementById('k-terapi');
+  ta.value = ta.value ? (ta.value + '\n' + baris) : baris;
+  document.getElementById('t-dosis').value = '';
+}
 
 // ---------- submit kunjungan ----------
 function submitKunjungan(){
