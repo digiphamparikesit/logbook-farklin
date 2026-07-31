@@ -69,6 +69,12 @@
   textarea.tall{min-height:140px;}
   @media (min-width:820px){ .kunjungan-grid{grid-template-columns:1fr 2fr;align-items:start;} }
 
+  .pio-grid{display:grid;grid-template-columns:1fr;gap:14px;}
+  .pio-grid .panel-kiri, .pio-grid .panel-kanan{margin-bottom:0;}
+  textarea.pio-pertanyaan{min-height:120px;}
+  textarea.pio-jawaban{min-height:300px;}
+  @media (min-width:820px){ .pio-grid{grid-template-columns:1fr 2fr;align-items:start;} }
+
   .chip-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
   .chip{border:1px solid var(--border-strong);border-radius:20px;padding:8px 14px;font-size:13px;cursor:pointer;color:var(--text-secondary);user-select:none;}
   .chip.on{background:var(--teal-light);border-color:var(--teal);color:var(--teal-dark);font-weight:600;}
@@ -202,28 +208,34 @@
 
       <!-- HALAMAN: PIO -->
       <section id="page-pio" style="display:none">
-        <div class="card">
-          <h2>Catat PIO (pertanyaan informasi obat)</h2>
-          <label>Tanggal PIO</label>
-          <input type="date" id="p-tgl">
-          <div class="row2">
-            <div><label>Nama penanya</label><input id="p-nama"></div>
-            <div><label>Status penanya</label>
-              <select id="p-status"><option>PERAWAT</option><option>DOKTER</option><option>PASIEN</option><option>KELUARGA PASIEN</option><option>LAIN-LAIN</option></select>
-            </div>
+        <div class="pio-grid">
+
+          <div class="card panel-kiri">
+            <h2>Catat PIO</h2>
+            <label>Tanggal PIO</label>
+            <input type="date" id="p-tgl">
+            <label>Nama penanya</label>
+            <input id="p-nama">
+            <label>Status penanya</label>
+            <select id="p-status"><option>PERAWAT</option><option>DOKTER</option><option>PASIEN</option><option>KELUARGA PASIEN</option><option>LAIN-LAIN</option></select>
           </div>
-          <label>Pertanyaan</label>
-          <textarea id="p-pertanyaan"></textarea>
-          <label>Jawaban</label>
-          <textarea id="p-jawaban"></textarea>
-          <div class="row2">
-            <div><label>Pustaka (opsional)</label><input id="p-pustaka"></div>
-            <div><label>Waktu jawab</label>
-              <select id="p-waktu"><option>KURANG DARI 24 JAM</option><option>LEBIH DARI 24 JAM</option></select>
+
+          <div class="card panel-kanan">
+            <h2>Pertanyaan &amp; jawaban</h2>
+            <label>Pertanyaan</label>
+            <textarea id="p-pertanyaan" class="pio-pertanyaan"></textarea>
+            <label>Jawaban</label>
+            <textarea id="p-jawaban" class="pio-jawaban"></textarea>
+            <div class="row2">
+              <div><label>Pustaka (opsional)</label><input id="p-pustaka"></div>
+              <div><label>Waktu jawab</label>
+                <select id="p-waktu"><option>KURANG DARI 24 JAM</option><option>LEBIH DARI 24 JAM</option></select>
+              </div>
             </div>
+            <button class="primary" onclick="submitPIO()">Simpan PIO</button>
+            <div id="pMsg"></div>
           </div>
-          <button class="primary" onclick="submitPIO()">Simpan PIO</button>
-          <div id="pMsg"></div>
+
         </div>
       </section>
 
