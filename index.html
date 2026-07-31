@@ -65,9 +65,14 @@
   @media (max-width:480px){ .row3{grid-template-columns:1fr;} }
 
   .kunjungan-grid{display:grid;grid-template-columns:1fr;gap:14px;}
-  .kunjungan-grid .panel-kiri, .kunjungan-grid .panel-kanan{margin-bottom:0;}
+  .kunjungan-grid .panel-kiri, .kunjungan-grid .panel-kanan, .kunjungan-grid .panel-cari{margin-bottom:0;}
   textarea.tall{min-height:140px;}
-  @media (min-width:820px){ .kunjungan-grid{grid-template-columns:1fr 2fr;align-items:start;} }
+  @media (min-width:820px){
+    .kunjungan-grid{grid-template-columns:1fr 2fr;grid-auto-rows:min-content;align-items:start;}
+    .kunjungan-grid .panel-kiri{grid-column:1;grid-row:1;}
+    .kunjungan-grid .panel-cari{grid-column:1;grid-row:2;}
+    .kunjungan-grid .panel-kanan{grid-column:2;grid-row:1 / span 2;}
+  }
 
   .pio-grid{display:grid;grid-template-columns:1fr;gap:14px;}
   .pio-grid .panel-kiri, .pio-grid .panel-kanan{margin-bottom:0;}
@@ -172,10 +177,25 @@
             <label>Nama pasien</label>
             <input id="k-pasien" placeholder="Nama pasien">
             <label>Tipe pasien</label>
-            <div class="chip-group" id="k-tipe-chips">
-              <div class="chip" data-tipe="RANAP">RANAP</div>
-              <div class="chip" data-tipe="RAJAL">RAJAL</div>
-            </div>
+            <div class="chip-group" id="k-tipe-chips"></div>
+          </div>
+
+          <div class="card panel-cari">
+            <h2>Cari riwayat terapi pasien</h2>
+            <div class="hint" style="margin-bottom:10px">Riwayat kunjungan pasien yang sama, lintas semua apoteker.</div>
+
+            <label>Tipe pasien</label>
+            <div class="chip-group" id="s-tipe-chips"></div>
+
+            <label>Dari tanggal</label>
+            <input type="date" id="s-mulai">
+            <label>Sampai tanggal</label>
+            <input type="date" id="s-selesai">
+
+            <label>Nama pasien</label>
+            <input id="s-nama" placeholder="Ketik nama pasien..." onkeydown="if(event.key==='Enter') cariRiwayatPasien()">
+            <button class="secondary" style="margin-top:12px" onclick="cariRiwayatPasien()">Cari riwayat</button>
+            <div id="riwayatPasienResult" style="margin-top:14px"></div>
           </div>
 
           <div class="card panel-kanan">
@@ -213,31 +233,6 @@
             <div id="kMsg"></div>
           </div>
 
-        </div>
-
-        <div class="card" style="margin-top:14px">
-          <h2>Cari riwayat terapi pasien</h2>
-          <div class="hint" style="margin-bottom:10px">Mencari riwayat kunjungan pasien yang sama, lintas semua apoteker.</div>
-
-          <label>Tipe pasien</label>
-          <div class="chip-group" id="s-tipe-chips">
-            <div class="chip on" data-tipe="">Semua</div>
-            <div class="chip" data-tipe="RANAP">RANAP</div>
-            <div class="chip" data-tipe="RAJAL">RAJAL</div>
-          </div>
-
-          <div class="row2" style="margin-top:12px">
-            <div><label style="margin-top:0">Dari tanggal</label><input type="date" id="s-mulai"></div>
-            <div><label style="margin-top:0">Sampai tanggal</label><input type="date" id="s-selesai"></div>
-          </div>
-
-          <label>Nama pasien</label>
-          <div class="row2">
-            <input id="s-nama" placeholder="Ketik nama pasien..." style="grid-column:1/3" onkeydown="if(event.key==='Enter') cariRiwayatPasien()">
-          </div>
-          <button class="secondary" style="margin-top:12px" onclick="cariRiwayatPasien()">Cari riwayat</button>
-
-          <div id="riwayatPasienResult" style="margin-top:14px"></div>
         </div>
       </section>
       <section id="page-pio" style="display:none">
@@ -390,6 +385,11 @@ function doLogin(){
     });
     callApi('getObatList').then(function(list){
       document.getElementById('t-obat').innerHTML = list.map(o=>`<option>${o}</option>`).join('');
+    });
+    callApi('getTipePasienList').then(function(list){
+      const opts = list.map(t=>`<div class="chip" data-tipe="${t}">${t}</div>`).join('');
+      document.getElementById('k-tipe-chips').innerHTML = opts;
+      document.getElementById('s-tipe-chips').innerHTML = '<div class="chip on" data-tipe="">Semua</div>' + opts;
     });
     if(res.role === 'admin') setupAdminFilters();
     goHome();
